@@ -9,13 +9,23 @@ const db = mongoose.connect(uriDb, {
   useFindAndModify: false,
 })
 
-db
-  .then(() => {
-    console.log('Database connection successful.')
-  })
-  .catch((err) => {
-    console.log(`Database connection failed. Error message: ${err.message}`)
+mongoose.connection.on('connected', () => {
+  console.log('Database connection successful')
+})
+
+mongoose.connection.on('error', (err) => {
+  console.log(`Database connection error: ${err.message}`)
+})
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Database disconnected')
+})
+
+process.on('SIGINT', async () => {
+  await mongoose.connection.close(() => {
+    console.log('connection for db closed and app termination')
     process.exit(1)
   })
+})
 
 module.exports = db
