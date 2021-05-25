@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose')
 const bcrypt = require('bcryptjs')
 const { Subscription } = require('../../helpers/constans')
 const gravatar = require('gravatar')
-const SALT_WORK_FACTOR = 8
+const SALT_WORK_FACTOR = 8 // установили сколько раз будем солить наш пароль
 
 const userSchema = new Schema({
   email: {
@@ -11,24 +11,29 @@ const userSchema = new Schema({
     unique: true,
     validate(value) {
       const re = /\S+@\S+\.\S+/
+
       return re.test(String(value).toLowerCase())
     },
   },
+
   password: {
     type: String,
     required: [true, 'Password required'],
   },
+
+  avatarURL: {
+    type: String,
+    default: function () {
+      return gravatar.url(this.email, { s: '250' }, true)
+    }
+  },
+
   subscription: {
     type: String,
     enum: [Subscription.FREE, Subscription.PRO, Subscription.PREMIUM],
     default: Subscription.FREE,
   },
-  avatarURL: {
-    type: String,
-    default: function () {
-      return gravatar.url(this.email, { s: '200' }, true)
-    }
-  },
+
   token: {
     type: String,
     default: null,
@@ -37,6 +42,7 @@ const userSchema = new Schema({
 { versionKey: false, timestamps: true },
 )
 
+// хук для соления пароля
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     return next()
@@ -46,6 +52,7 @@ userSchema.pre('save', async function(next) {
   next()
 })
 
+// валидация пароля возвращает true или false
 userSchema.methods.validPassword = async function (password) {
   return await bcrypt.compare(password, this.password)
 }
