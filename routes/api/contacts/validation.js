@@ -18,6 +18,7 @@ const validate = (schema, obj, next) => {
   const { error } = schema.validate(obj)
 
   if (error) {
+    // eslint-disable-next-line no-unused-vars
     const [{ message }] = error.details
 
     return next({
