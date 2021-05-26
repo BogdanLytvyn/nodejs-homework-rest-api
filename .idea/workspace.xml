@@ -1,20 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0bf860da-945e-4b4e-8468-60543fd7f465" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/controllers/contacts.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model/db.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model/schema/contact.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/server.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/contacts.js" beforeDir="false" afterPath="$PROJECT_DIR$/model/contacts.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/contacts.json" beforeDir="false" afterPath="$PROJECT_DIR$/model/contacts.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/api/contacts.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/api/contacts.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/volidation/validation.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/volidation/validation.js" afterDir="false" />
-    </list>
+    <list default="true" id="0bf860da-945e-4b4e-8468-60543fd7f465" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -43,7 +30,7 @@
     </favorite-branches>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="hw-02" />
+        <entry key="$PROJECT_DIR$" value="master" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -79,6 +66,7 @@
       <workItem from="1620633389634" duration="204000" />
       <workItem from="1620633610189" duration="98000" />
       <workItem from="1620633764963" duration="1335000" />
+      <workItem from="1621837765154" duration="334000" />
     </task>
     <servers />
   </component>
