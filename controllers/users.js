@@ -1,144 +1,169 @@
 const jwt = require('jsonwebtoken')
 const Users = require('../model/users')
-const { HttpCode } = require('../helpers/constans')
+const httpCode = require('../helpers/httpCode')
+const EmailService = require('../services/email')
 require('dotenv').config()
-const fs = require('fs/promises')
-const path = require('path')
-const createFolderIsExist = require('../helpers/createDir')
-const SECRET_KEY = process.env.JWT_SECRET
+const JWT_SECRET_KEY = process.env.SECRET_KEY
 
-const reg = async (req, res, next) => {
+const signupUser = async (req, res, next) => {
   try {
-    const { email } = req.body
-    const user = await Users.findByEmail(email)
-
+    const user = await Users.findUserByEmail(req.body.email)
     if (user) {
-      return res.status(HttpCode.CONFLICT).json({
-        status: 'error',
-        code: HttpCode.CONFLICT,
-        data: 'Conflict',
-        message: 'Email already use',
+      return res.status(httpCode.CONFLICT).json({
+        status: 'conflict',
+        code: httpCode.CONFLICT,
+        message: 'Email in use'
       })
     }
-    const newUser = await Users.create(req.body)
-
-    return res.status(HttpCode.CREATED).json({
-      status: 'success',
-      code: HttpCode.CREATED,
-      user: {
-        email: newUser.email,
-        subscription: newUser.subscription,
-      },
-    })
-  } catch (err) {
-    next(err)
-  }
-}
-
-const login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body
-    const user = await Users.findByEmail(email)
-    const isValidPassword = await user?.validPassword(password)
-
-    if (!user || !isValidPassword) {
-      return res.status(HttpCode.UNAUTHORIZED).json({
-        status: 'error',
-        code: HttpCode.UNAUTHORIZED,
-        data: 'UNAUTHORIZED',
-        message: 'Email or password is wrong',
-      })
+    const newUser = await Users.createUser(req.body)
+    const { name, email, subscription, verifyToken } = newUser
+    try {
+      const emailService = new EmailService(process.env.NODE_ENV)
+      await emailService.sendVerifyEmail(verifyToken, email, name)
+    } catch (error) {
+      console.log(error.message)
     }
-    const id = user._id
-    const payload = { id }
-    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '2h' })
-    await Users.updateToken(id, token)
-
-    return res.status(HttpCode.OK).json({
-      status: 'success',
-      code: HttpCode.OK,
+    return res.status(httpCode.CREATED).json({
+      status: 'created',
+      code: httpCode.CREATED,
       data: {
-        token,
-        user: {
-          email: user.email,
-          subscription: user.subscription,
-        },
-      },
-    })
-  } catch (err) {
-    next(err)
-  }
-}
-
-const logout = async (req, res, next) => {
-  const id = req.user.id
-  await Users.updateToken(id, null)
-
-  return res.status(HttpCode.NO_CONTENT).json({})
-}
-
-const currentUser = async (req, res, next) => {
-  try {
-    if (!req.user) {
-      return res.status(HttpCode.UNAUTHORIZED).json({
-        status: 'error',
-        code: HttpCode.UNAUTHORIZED,
-        data: 'UNAUTHORIZED',
-        message: 'Not authorized',
-      })
-    }
-    const id = req.user.id
-    const currentUser = await Users.findById(id)
-
-    return res.status(HttpCode.OK).json({
-      status: 'success',
-      code: HttpCode.OK,
-      data: {
-        email: currentUser.email,
-        subscription: currentUser.subscription,
-      },
-    })
-  } catch (err) {
-    next(err)
-  }
-}
-
-const updateUser = async (req, res, next) => {
-  try {
-    const id = req.user.id
-    const avatarUrl = await saveAvatarToStatic(req)
-    await Users.updateAvatar(id, avatarUrl)
-
-    return res.json({
-      status: 'success',
-      code: HttpCode.OK,
-      data: {
-        ...req.body,
-        avatarUrl,
+        email,
+        subscription
       }
     })
-  } catch (err) {
-    next(err)
+  } catch (error) {
+    console.log(error)
+    next(error)
   }
 }
 
-const saveAvatarToStatic = async (req) => {
-  const id = req.user.id
-  const AVATARS_OF_USERS = process.env.AVATARS_OF_USERS
-  const pathFile = req.file.path
-  const avatarName = req.file.originalname
-  const folderForUserAvatar = id
-  await createFolderIsExist(path.join(AVATARS_OF_USERS, folderForUserAvatar))
-  await fs.rename(pathFile, path.join(AVATARS_OF_USERS, folderForUserAvatar, avatarName))
-  const avatarURL = path.normalize(path.join(id, avatarName))
-
+const loginUser = async (req, res, next) => {
   try {
-    await fs.unlink(path.join(process.cwd(), AVATARS_OF_USERS, req.user.avatar))
-  } catch (err) {
-    console.log(err.message)
+    const user = await Users.findUserByEmail(req.body.email)
+    const isValidPassword = await user?.validatePassword(req.body.password)
+    if (!user || !isValidPassword || !user.verify) {
+      return res.status(httpCode.UNAUTHORIZED).json({
+        status: 'error',
+        code: httpCode.UNAUTHORIZED,
+        message: 'Invalid credential'
+      })
+    }
+    const payload = { id: user._id }
+    const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '2h' })
+    await Users.updateToken(user._id, token)
+    return res.status(httpCode.OK).json({
+      status: 'success',
+      code: httpCode.OK,
+      data: {
+        token,
+        user: { email: user.email, subscription: user.subscription }
+      }
+    })
+  } catch (error) {
+    next(error)
   }
-
-  return avatarURL
 }
 
-module.exports = { reg, login, logout, currentUser, updateUser }
+const logoutUser = async (req, res, next) => {
+  try {
+    const id = req.user.id
+    await Users.updateToken(id, null)
+    return res.status(httpCode.NO_CONTENT).json({})
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getCurrentUser = async (req, res, next) => {
+  try {
+    const {
+      user: { email, subscription }
+    } = req
+    return res.status(httpCode.OK).json({
+      status: 'success',
+      code: httpCode.OK,
+      data: { email, subscription }
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateSubscriptionUser = async (req, res, next) => {
+  try {
+    const {
+      user: { _id },
+      body: { subscription }
+    } = req
+
+    const user = await Users.updateSubscription(_id, subscription)
+    return res.status(httpCode.OK).json({
+      status: 'success',
+      code: httpCode.OK,
+      data: { email: user.email, subscription: user.subscription }
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const emailVerify = async (req, res, next) => {
+  try {
+    const user = await Users.findUserByVerifyToken(req.params.token)
+    if (!user) {
+      return res.status(httpCode.NOT_FOUND).json({
+        status: 'fail',
+        code: httpCode.NOT_FOUND,
+        message: 'User not found'
+      })
+    }
+    await Users.updateVerifyToken(user.id, true, null)
+    return res.status(httpCode.OK).json({
+      status: 'success',
+      code: httpCode.OK,
+      message: 'Verification successful'
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const repeatEmailVerify = async (req, res, next) => {
+  try {
+    const user = await Users.findUserByVerifyToken(req.params.token)
+    if (!user) {
+      return res.status(httpCode.NOT_FOUND).json({
+        status: 'fail',
+        code: httpCode.NOT_FOUND,
+        message: 'User not found'
+      })
+    }
+    if (user.verify) {
+      return res.status(httpCode.BAD_REQUEST).json({
+        status: 'fail',
+        code: httpCode.BAD_REQUEST,
+        message: 'Verification has already been passed'
+      })
+    }
+    const { verifyToken, email, name } = user
+    const emailService = new EmailService(process.env.NODE_ENV)
+    await emailService.sendVerifyEmail(verifyToken, email, name)
+    return res.status(httpCode.OK).json({
+      status: 'success',
+      code: httpCode.OK,
+      message: 'Verification email sent'
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+module.exports = {
+  signupUser,
+  loginUser,
+  logoutUser,
+  getCurrentUser,
+  updateSubscriptionUser,
+  emailVerify,
+  repeatEmailVerify
+}

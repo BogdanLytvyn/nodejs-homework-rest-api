@@ -1,43 +1,46 @@
-const Contact = require('./schemas/contact')
+const Contacts = require('./schemas/contact')
 
-const listContacts = async (userId) => {
-  const results = await Contact.find({ owner: userId }).populate({
-    path: 'owner',
-    select: 'name email phone -_id'
+const listContacts = async (userId, query) => {
+  const { favorite, page = 1, limit = 10 } = query
+  const options = { owner: userId }
+  if (favorite) options.favorite = favorite
+  return await Contacts.paginate(options, {
+    page,
+    limit,
+    populate: {
+      path: 'owner',
+      select: 'email subscription'
+    }
   })
-
-  return results
 }
 
-const getContactById = async (id, userId) => {
-  const result = await Contact.findOne({ _id: id, owner: userId }).populate({
+const getContactById = async (userId, contactId) => {
+  return Contacts.findById({ _id: contactId, owner: userId }).populate({
     path: 'owner',
-    select: 'name email phone -_id',
+    select: 'email subscription'
   })
-
-  return result
 }
 
-const removeContact = async (id, userId) => {
-  const result = await Contact.findByIdAndRemove({ id, owner: userId })
-
-  return result
+const removeContact = async (userId, contactId) => {
+  return await Contacts.findByIdAndDelete({ _id: contactId, owner: userId })
 }
 
-const addContact = async (body) => {
-  const result = await Contact.create(body)
-
-  return result
+const addContact = async (userId, body) => {
+  return await Contacts.create({ ...body, owner: userId })
 }
 
-const updateContact = async (id, body, userId) => {
-  const result = await Contact.findByIdAndUpdate(
-    { id, owner: userId },
-    { ...body },
-    { new: true },
-  )
+const updateContact = async (userId, contactId, body) => {
+  return await Contacts.findByIdAndUpdate({ _id: contactId, owner: userId }, body, { new: true }).populate({
+    path: 'owner',
+    select: 'email subscription'
+  })
+}
 
-  return result
+const updateStatusContact = async (userId, contactId, body) => {
+  return await Contacts.findByIdAndUpdate({ _id: contactId, owner: userId }, body, { new: true }).populate({
+    path: 'owner',
+    select: 'email subscription'
+  })
 }
 
 module.exports = {
@@ -46,4 +49,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact
 }

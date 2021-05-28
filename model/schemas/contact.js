@@ -1,44 +1,31 @@
-const mongoose = require('mongoose')
-const { Schema, model, SchemaTypes } = mongoose
+const { Schema, model, SchemaTypes } = require('mongoose')
+const mongoosePaginate = require('mongoose-paginate-v2')
 
-const contactSchema = new Schema({
+const contactsSchema = new Schema({
   name: {
     type: String,
-    required: [true, 'Set name for contact']
+    required: [true, 'Set name for contact'],
   },
   email: {
     type: String,
-    required: [true, 'Set email for contact'],
-    unique: true,
   },
   phone: {
     type: String,
-    validate: {
-      validator: function(v) {
-        return /\d{3}-\d{3}-\d{4}/.test(v)
-      },
-      message: props => `${props.value} is not a valid phone number!`
-    },
-    required: [true, 'User phone number required']
   },
-  subscription: {
-    type: String,
-  },
-  password: {
-    type: String,
-    require: [true, 'Set password for contact'],
-  },
-  token: {
-    type: String,
+  favorite: {
+    type: Boolean,
+    default: false,
   },
   owner: {
     type: SchemaTypes.ObjectId,
     ref: 'user',
   },
-},
-{ versionKey: false, timestamps: true }
-)
+}, {
+  versionKey: false,
+  timestamps: true,
+})
 
-const Contact = model('contact', contactSchema)
+contactsSchema.plugin(mongoosePaginate)
+const Contacts = model('contact', contactsSchema)
 
-module.exports = Contact
+module.exports = Contacts
