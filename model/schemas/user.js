@@ -20,7 +20,7 @@ const usersSchema = new Schema(
       type: String,
       enum: {
         values: [...Object.values(subscriptions)],
-        message: "Havn't this subscription type"
+        message: "Haven't this subscription type"
       },
       default: subscriptions.STARTER
     },
