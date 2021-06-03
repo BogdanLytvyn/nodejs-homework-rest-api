@@ -1,31 +1,40 @@
-const User = require('./schemas/user')
+const Users = require('./schemas/user')
 
-const findByEmail = async (email) => {
-  return await User.findOne({ email })
+const findUserById = async (userId) => {
+  return await Users.findById(userId)
 }
 
-const findById = async (id) => {
-  return await User.findOne({ _id: id })
+const findUserByEmail = async (email) => {
+  return await Users.findOne({ email })
 }
 
-const create = async ({ email, password }) => {
-  const user = new User({ email, password })
+const findUserByVerifyToken = async (verifyToken) => {
+  return await Users.findOne({ verifyToken })
+}
 
+const createUser = async (userOptions) => {
+  const user = new Users(userOptions)
   return await user.save()
 }
 
 const updateToken = async (id, token) => {
-  return await User.updateOne({ _id: id }, { token })
+  return await Users.findByIdAndUpdate(id, { token })
 }
 
-const updateAvatar = async (id, avatarURL) => {
-  return await User.updateOne({ _id: id }, { avatarURL })
+const updateSubscription = async (id, subscription) => {
+  return await Users.findByIdAndUpdate(id, { subscription }, { new: true })
+}
+
+const updateVerifyToken = async (id, verify, verifyToken) => {
+  return await Users.findByIdAndUpdate(id, { verify, verifyToken })
 }
 
 module.exports = {
-  findByEmail,
-  findById,
-  create,
+  findUserById,
+  findUserByEmail,
+  findUserByVerifyToken,
+  createUser,
   updateToken,
-  updateAvatar
+  updateSubscription,
+  updateVerifyToken
 }
